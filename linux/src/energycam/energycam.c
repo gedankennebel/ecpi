@@ -418,6 +418,12 @@ void ErrorAndExit(const char *info)
 int main(int argc, char *argv[]) 
 { 
 
+	//Projektwerkstatt
+	if(argc != 4) {
+		ErrorAndExit("Illegal number of Parameters");
+	}
+	//Projektwerkstatt
+
 	int key=0;
 	int  Reading;
 	char OCR[20];
@@ -454,6 +460,14 @@ int main(int argc, char *argv[])
 		if(sock != -1) break;
 	}while(iRetry-- < 0);
 
+	if(sock != -1) {
+		Colour(PRINTF_GREEN,false);
+		printf("Set up Socket");
+		Colour(0,true);
+	} else {
+		ErrorAndExit("Troubles setting up Socket");
+	}
+
 	struct sockaddr_in server;
 	unsigned long addr;
 
@@ -462,7 +476,7 @@ int main(int argc, char *argv[])
 	addr = inet_addr( argv[1] );
 	memcpy( (char *)&server.sin_addr, &addr, sizeof(addr));
 	server.sin_family = AF_INET;
-	server.sin_port = htons(8080);
+	server.sin_port = htons( atoi( argv[2]) );
 
 	if(sock != -1)
 	{
@@ -474,6 +488,15 @@ int main(int argc, char *argv[])
 			if(connected != -1) break;
 		}while(iRetry-- > 0);
 	}
+
+	if(connected != -1) {
+		Colour(PRINTF_GREEN,false);
+		printf("Connected to Server ");
+		Colour(0,true);
+	} else {
+		ErrorAndExit("No Connection to Server");
+	}
+
 	//Projektwerkstatt
 
 	//get Status & wakeup
@@ -536,11 +559,13 @@ int main(int argc, char *argv[])
 	  struct tm tm = *localtime(&t);
 			
 	  printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
-	  char *request;
+	  //Projektwerkstatt
+	  char request[];
 	  int OffsetHours = tm.tm_gmtoff/3600;
 	  unsigned int OffsetMin = tm.tm_gmtoff/60;
-	  sprintf(request,"POST meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[2]);
+	  sprintf(request,"POST meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[3]);
 	  send(sock,request,strlen(request),0);
+	  //Projektwerkstatt
 	  EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
 	}
 		
@@ -577,32 +602,32 @@ int main(int argc, char *argv[])
 		}
 		
 		if(iReadRequest > 0) {
-			iReadRequest=0;
+		  iReadRequest=0;
 		  printf("%02d \n",ReadingTimer);	
-			ReadingTimer=ReadingPeriod+1;
+		  ReadingTimer=ReadingPeriod+1;
 			
-			//get Status & wakeup
-			iRetry = 3;
-			do {
-				if(iRetry-- < 0 ) break;
-			}while(MODBUSERROR == EnergyCam_GetStatusReading(&Data));
-			printf("GetStatusReading %04X \n",Data);
-			
-			EnergyCam_GetOCRPicDone(&Data);
-			printf("Pictures %04d \n",Data);
-			
-			if (MODBUSOK == EnergyCam_GetResultOCRInt(&OCRData,&Data)) {
-				time_t t = time(NULL);
-				struct tm tm = *localtime(&t);
-							
-				printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
-	 			int OffsetHours = tm.tm_gmtoff/3600;
-	  			unsigned int OffsetMin = tm.tm_gmtoff/60;
-				char *request;
-	  			sprintf(request,"POST meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\n\r\n", tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1]);
-	  			send(sock,request,strlen(request),0);
-				EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
-			}	
+		  //get Status & wakeup
+	  	  iRetry = 3;
+		  do {
+		    if(iRetry-- < 0 ) break;
+		  }while(MODBUSERROR == EnergyCam_GetStatusReading(&Data));
+		    printf("GetStatusReading %04X \n",Data);
+		    EnergyCam_GetOCRPicDone(&Data);
+		    printf("Pictures %04d \n",Data);
+
+		    if (MODBUSOK == EnergyCam_GetResultOCRInt(&OCRData,&Data)) {
+		    time_t t = time(NULL);
+		    struct tm tm = *localtime(&t);
+	    	    //Projektwerkstatt
+		    printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
+	 	    int OffsetHours = tm.tm_gmtoff/3600;
+	  	    unsigned int OffsetMin = tm.tm_gmtoff/60;
+		    char request[];
+	  	    sprintf(request,"POST meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[3]);
+		    //Projektwerkstatt
+	  	    send(sock,request,strlen(request),0);
+		    EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
+		  }	
 		}
 	
 	} // end while

@@ -1,9 +1,10 @@
 #!/bin/bash
-user=$1
-pass=$2
-ip = $3
+ip=$1
+port=$2
+user=$3
+pass=$4
 
 auth=$(echo -ne "$user:$pass" | base64);
 
-sudo ./ecpi ip auth
+sudo ./ecpi ip port auth
 
