@@ -560,10 +560,12 @@ int main(int argc, char *argv[])
 			
 	  printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
 	  //Projektwerkstatt
-	  char request[];
 	  int OffsetHours = tm.tm_gmtoff/3600;
-	  unsigned int OffsetMin = tm.tm_gmtoff/60;
-	  sprintf(request,"POST meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[3]);
+	  int year = tm.tm_year + 1900;
+	  int mon = tm.tm_mon + 1;
+	  unsigned int OffsetMin = tm.tm_gmtoff/60 - OffsetHours*60;
+	  char request[200];
+	  sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", year, mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[3]);
 	  send(sock,request,strlen(request),0);
 	  //Projektwerkstatt
 	  EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
@@ -621,11 +623,13 @@ int main(int argc, char *argv[])
 	    	    //Projektwerkstatt
 		    printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
 	 	    int OffsetHours = tm.tm_gmtoff/3600;
-	  	    unsigned int OffsetMin = tm.tm_gmtoff/60;
-		    char request[];
-	  	    sprintf(request,"POST meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[3]);
+		    int year = tm.tm_year + 1900;
+		    int mon = tm.tm_mon + 1;
+		    unsigned int OffsetMin = tm.tm_gmtoff/60 - OffsetHours*60;
+		    char request[200];
+		    sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", year, mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[3]);
+		    send(sock,request,strlen(request),0);
 		    //Projektwerkstatt
-	  	    send(sock,request,strlen(request),0);
 		    EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
 		  }	
 		}
