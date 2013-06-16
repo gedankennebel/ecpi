@@ -6,5 +6,5 @@ pass=$4
 
 auth=$(echo -ne "$user:$pass" | base64);
 
-sudo ./ecpi ip port auth
+sudo ./ecpi $ip $port $auth
 
