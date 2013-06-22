@@ -388,9 +388,9 @@ void Intro(int Read)
 {
 	printf("   \n");
 	Colour(62,false);	
-	printf("############################################\r\n");
-	printf("## ecpi - EnergyCam on raspberry Pi/Weezy ##\r\n");	
-	printf("############################################\r\n");
+	printf("#############################################\r\n");
+	printf("## ecpi - EnergyCam on raspberry Pi/Wheezy ##\r\n");	
+	printf("#############################################\r\n");
 
 	Colour(0,true);
 	printf("   Usage\n");
@@ -414,6 +414,75 @@ void ErrorAndExit(const char *info)
 	exit(0);
 }
 
+//Projektwerkstatt
+void sendDataToServer(char ip[], char port[], char auth[], int OCRData)
+{
+	printf("%s,%s,%s\n",ip,port,auth);	
+	int sock;
+	int connected;	
+	int iRetry = 3;
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+	do{
+		sock = socket( AF_INET, SOCK_STREAM, 0 );
+		if(sock != -1) break;
+	}while(iRetry-- < 0);
+
+	if(sock != -1) {
+		
+		printf("Set up Socket");
+		
+	} else {
+		printf("Troubles setting up Socket");
+
+		exit(0);
+	}
+
+	struct sockaddr_in server;
+	unsigned long addr;
+
+	memset( &server, 0, sizeof (server));
+
+	addr = inet_addr( ip );
+	memcpy( (char *)&server.sin_addr, &addr, sizeof(addr));
+	server.sin_family = AF_INET;
+	server.sin_port = htons( atoi( port ) );
+
+	if(sock != -1)
+	{
+		// connect to Server
+		iRetry = 3;
+		do
+		{
+			connected = connect(sock,(struct sockaddr*)&server, sizeof(server));
+			if(connected != -1) break;
+		}while(iRetry-- > 0);
+	}
+
+	if(connected != -1) {
+		
+		printf("Connected to Server ");
+		
+	} else {
+		printf("No Connection to Server");
+
+		exit(0);
+	}
+	
+	int OffsetHours = tm.tm_gmtoff/3600;
+	unsigned int OffsetMin = tm.tm_gmtoff/60 - OffsetHours*60;
+	char request[200];
+	sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-%02d:%02d&value=%d HTTP/1.0\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec + 5, tm.tm_gmtoff/3600, OffsetMin,OCRData,ip,auth);
+	send(sock,request,strlen(request),0);
+	printf("%d",tm.tm_year);
+	printf(request);
+	char buf[1024];
+	while (recv(sock,buf,sizeof(buf)-1,0)) {
+		printf("%s",buf);
+	}
+}
+//Projektwerkstatt
+
 //////////////////////////////////////////////
 int main(int argc, char *argv[]) 
 { 
@@ -428,7 +497,7 @@ int main(int argc, char *argv[])
 	int  Reading;
 	char OCR[20];
 	char Version[20];
-		
+
 	int iReadRequest=0;
 
 	int ReadingPeriod=10;
@@ -445,59 +514,13 @@ int main(int argc, char *argv[])
 	int connected;
 
 	Intro(ReadingPeriod);
-	 
+
 	if (wiringPiSetup () == -1) {
 		fprintf (stderr, "Not running on raspberry pi - now ending\n") ;
 		exit(0);
 	}
 			
 	EnergyCamOpen(0);  //open serial port
-
-	//Projektwerkstatt
-	iRetry = 3;
-	do{
-		sock = socket( AF_INET, SOCK_STREAM, 0 );
-		if(sock != -1) break;
-	}while(iRetry-- < 0);
-
-	if(sock != -1) {
-		Colour(PRINTF_GREEN,false);
-		printf("Set up Socket");
-		Colour(0,true);
-	} else {
-		ErrorAndExit("Troubles setting up Socket");
-	}
-
-	struct sockaddr_in server;
-	unsigned long addr;
-
-	memset( &server, 0, sizeof (server));
-
-	addr = inet_addr( argv[1] );
-	memcpy( (char *)&server.sin_addr, &addr, sizeof(addr));
-	server.sin_family = AF_INET;
-	server.sin_port = htons( atoi( argv[2]) );
-
-	if(sock != -1)
-	{
-		// connect to Server
-		iRetry = 3;
-		do
-		{
-			connected = connect(sock,(struct sockaddr*)&server, sizeof(server));
-			if(connected != -1) break;
-		}while(iRetry-- > 0);
-	}
-
-	if(connected != -1) {
-		Colour(PRINTF_GREEN,false);
-		printf("Connected to Server ");
-		Colour(0,true);
-	} else {
-		ErrorAndExit("No Connection to Server");
-	}
-
-	//Projektwerkstatt
 
 	//get Status & wakeup
 	iRetry = 3;
@@ -512,12 +535,12 @@ int main(int argc, char *argv[])
 	} else {
 		ErrorAndExit("EnergyCAM not found ");
 	}
-	
-		//Read Buildnumber
+
+	//Read Buildnumber
 	if (MODBUSOK == EnergyCam_GetAppFirmwareBuildNumber(&Build)) {
 	  printf("Build %d \n",Build);
 	}
-	
+
 	//Check Buildnumber, GetResultOCRInt requires Build 8374
 	if (Build < 8374) {
 	  ErrorAndExit("This App requires a Firmwareversion >= 8374. ");
@@ -545,13 +568,13 @@ int main(int argc, char *argv[])
 		//Is EnergyCam installed
 		Data = DisplayInstallationStatus();	
 	}
-	
+
 	if((Data == INSTALLATION_NODIGITS) || (Data == INSTALLATION_NOTDONE) || (Data == INSTALLATION_FAILED) || (Data == INSTALLATION_ONGOING)){
 		ErrorAndExit("EnergyCAM not installed ");
 	}	
 
 
-	
+
 
 	//get last Reading
 	if (MODBUSOK == EnergyCam_GetResultOCRInt(&OCRData,&Data)) {
@@ -559,52 +582,48 @@ int main(int argc, char *argv[])
 	  struct tm tm = *localtime(&t);
 	  printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
 	  //Projektwerkstatt
-	  int OffsetHours = tm.tm_gmtoff/3600;
-	  unsigned int OffsetMin = tm.tm_gmtoff/60 - OffsetHours*60;
-	  char request[200];
-	  sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[3]);
-	  send(sock,request,strlen(request),0);
+	  sendDataToServer(argv[1],argv[2],argv[3],OCRData);
 	  //Projektwerkstatt
 	  EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
 	}
-		
+
 	IsNewMinute();
 	ReadingTimer=ReadingPeriod+1;
-		
+
 	while (!((key == 0x1B) || (key == 'q')))
 	{
 		usleep(500*1000);   //sleep 500ms
-			
+
 		key = getkey();
-		
+
 		if(key == 'r')   {
 		  iReadRequest++; //Read now
 		}
 		if(key == 'R')   {
 			ReadingTimer=1;  //read in 1 minute
-			
+
 		  //get Status & wakeup
 			iRetry = 3;
 			do {
 				if(iRetry-- < 0 ) break;
 			}while(MODBUSERROR == EnergyCam_GetStatusReading(&Data));
 			printf("GetStatusReading %04X \n",Data);	
-			
+
 			//trigger new reading
 			EnergyCam_TriggerReading();		  
 		}			
-		
-		
+
+
 		if(IsNewMinute()){
 		  if(--ReadingTimer<=1)iReadRequest++;
 		  printf("%02d ",ReadingTimer);
 		}
-		
+
 		if(iReadRequest > 0) {
 		  iReadRequest=0;
 		  printf("%02d \n",ReadingTimer);	
 		  ReadingTimer=ReadingPeriod+1;
-			
+
 		  //get Status & wakeup
 	  	  iRetry = 3;
 		  do {
@@ -619,18 +638,14 @@ int main(int argc, char *argv[])
 		    struct tm tm = *localtime(&t);
 	    	    printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
 		    //Projektwerkstatt
-	 	    int OffsetHours = tm.tm_gmtoff/3600;
-		    unsigned int OffsetMin = tm.tm_gmtoff/60 - OffsetHours*60;
-		    char request[200];
-		    sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-%02d:%02d&value=%d HTTP/1.1\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin,OCRData,argv[1],argv[3]);
-		    send(sock,request,strlen(request),0);
+		    sendDataToServer(argv[1],argv[2],argv[3],OCRData);
 		    //Projektwerkstatt
 		    EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
 		  }	
 		}
-	
+
 	} // end while
-	
+
 	EnergyCamClose();
 
 	return 0;
