@@ -415,10 +415,10 @@ void ErrorAndExit(const char *info)
 }
 
 //Projektwerkstatt
-void sendDataToServer(char ip[], char port[], char auth[], int OCRData)
+void sendDataToServer(char ip[], char port[], char auth[], int OCRData, int Data)
 {
 	int sock;
-	int connected;	
+	int connected;
 	int iRetry = 3;
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
@@ -427,14 +427,9 @@ void sendDataToServer(char ip[], char port[], char auth[], int OCRData)
 		if(sock != -1) break;
 	}while(iRetry-- < 0);
 
-	if(sock != -1) {
-		
-		printf("Set up Socket");
-		
-	} else {
-		printf("Troubles setting up Socket");
+	if(sock == -1) {
 
-		exit(0);
+		ErrorAndExit("Troubles setting up Socket");
 	}
 
 	struct sockaddr_in server;
@@ -459,20 +454,18 @@ void sendDataToServer(char ip[], char port[], char auth[], int OCRData)
 	}
 
 	if(connected != -1) {
-		
-		printf("Connected to Server ");
-		
+		printf("Connected to Server \n");
 	} else {
-		printf("No Connection to Server");
-
-		exit(0);
+		ErrorAndExit("No Connection to Server");
 	}
-	
+
 	int OffsetHours = tm.tm_gmtoff/3600;
 	unsigned int OffsetMin = tm.tm_gmtoff/60 - OffsetHours*60;
 	char request[200];
-	sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-%02d:%02d&value=%d HTTP/1.0\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec + 5, tm.tm_gmtoff/3600, OffsetMin,OCRData,ip,auth);
+	sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-%02d:%02d&value=%d.%d HTTP/1.0\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin, OCRData, Data, ip, auth);
 	send(sock,request,strlen(request),0);
+	printf(request);
+	close(sock);
 }
 //Projektwerkstatt
 
@@ -575,7 +568,7 @@ int main(int argc, char *argv[])
 	  struct tm tm = *localtime(&t);
 	  printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
 	  //Projektwerkstatt
-	  sendDataToServer(argv[1],argv[2],argv[3],OCRData);
+	  sendDataToServer(argv[1],argv[2],argv[3],OCRData,Data);
 	  //Projektwerkstatt
 	  EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
 	}
@@ -631,7 +624,7 @@ int main(int argc, char *argv[])
 		    struct tm tm = *localtime(&t);
 	    	    printf("(%02d:%02d:%02d) Reading %04d.%d \n",tm.tm_hour,tm.tm_min,tm.tm_sec,OCRData,Data);
 		    //Projektwerkstatt
-		    sendDataToServer(argv[1],argv[2],argv[3],OCRData);
+		    sendDataToServer(argv[1],argv[2],argv[3],OCRData,Data);
 		    //Projektwerkstatt
 		    EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
 		  }	
