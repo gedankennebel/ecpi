@@ -160,20 +160,20 @@ int EnergyCam_GetResultOCRInstallation(uint16_t* pData) {
 
     const uint32_t regCnt = 1;
     uint16_t inputRegs[regCnt];
-    
-    if(NULL == pData) 
+
+    if(NULL == pData)
       return MODBUSERROR;
 
     readRegCnt = modbus_read_input_registers(m_ctx, MODBUS_GET_INTERNAL_ADDR_FROM_OFFICIAL(MODBUS_SLAVE_INPUTREG_MEMMAP_RESULTINSTALLATION), regCnt, &inputRegs[0]);
     if (readRegCnt != -1) {
         *pData = inputRegs[0];
-         
+
         return MODBUSOK;
     } else {
 	    //fprintf(stderr,"EnergyCam_GetResultOCRInstallation  failed \r\n");
         return MODBUSERROR;
-    }    
-  return MODBUSERROR; 
+    }
+  return MODBUSERROR;
 }
 
 //Trigger a new Reading
@@ -187,10 +187,10 @@ int EnergyCam_TriggerReading(void) {
         fprintf(stderr, "EnergyCam_TriggerReading failed with '%s'\n", modbus_strerror(errno));
     return MODBUSERROR;
     } else {
-      fprintf(stdout, "TriggerReading \n");
+      //fprintf(stdout, "TriggerReading \n");
       return MODBUSOK;
     }
-  return MODBUSERROR;     
+  return MODBUSERROR;
 }
 
 int EnergyCam_TriggerInstallation(void) {
@@ -206,7 +206,7 @@ int EnergyCam_TriggerInstallation(void) {
       fprintf(stdout, "TriggerInstallation \n");
       return MODBUSOK;
     }
-  return MODBUSERROR;     
+  return MODBUSERROR;
 }
 
 //Read the Status of the Reading
@@ -222,10 +222,10 @@ int EnergyCam_GetStatusReading(uint16_t* pStatus) {
     *pStatus = inputRegs[0];
     return MODBUSOK;
   } else {
-   fprintf(stderr,"EnergyCam_GetStatusReading  failed \r\n");
+   //fprintf(stderr,"EnergyCam_GetStatusReading  failed \r\n");
    return MODBUSERROR;
-  }    
-return MODBUSERROR; 
+  }
+return MODBUSERROR;
 }
 
 //Read OCR Result
@@ -248,8 +248,8 @@ int EnergyCam_GetResultOCRInt( uint32_t* pInt, uint16_t* pFrac) {
   } else {
       fprintf(stderr,"EnergyCam_GetResultOCRInt  failed \r\n");
         return MODBUSERROR;
-    }    
-   return MODBUSERROR; 
+    }
+   return MODBUSERROR;
 }
 
 //Read number of pictures done by OCR
@@ -268,8 +268,8 @@ int EnergyCam_GetOCRPicDone(uint16_t* pCount) {
   } else {
       fprintf(stderr,"EnergyCam_GetOCRPicDone  failed \r\n");
       return MODBUSERROR;
-    }    
-   return MODBUSERROR; 
+    }
+   return MODBUSERROR;
 }
 
 //Log Reading with date info to CSV File
@@ -281,7 +281,7 @@ int EnergyCam_Log2CSVFile(const char *path,	 uint32_t Int, uint16_t Frac)
   char  CurrentTime[250];
 
   time_t t = time(NULL);
-  struct tm tm = *localtime(&t);	
+  struct tm tm = *localtime(&t);
 
 	if ( (hFile = fopen(path, "rb")) != NULL ) {
 		fseek(hFile, 0L, SEEK_END);
@@ -289,23 +289,23 @@ int EnergyCam_Log2CSVFile(const char *path,	 uint32_t Int, uint16_t Frac)
 		fseek(hFile, 0L, SEEK_SET);
 		fclose(hFile);
 	}
-	else MODBUSERROR; 
-	
+	else MODBUSERROR;
+
 	if ( (hFile = fopen(path, "a")) != NULL ) {
 		  if(FileSize == 0)  //start a new file with Header
 				fprintf(hFile, "Date, Value \n");
 			fprintf(hFile,"%d-%02d-%02d %02d:%02d, %d.%d\r\n",tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday,tm.tm_hour,tm.tm_min, Int,Frac);
 			fclose(hFile);
 		}
-	else MODBUSERROR; 
-		
- return MODBUSOK; 
+	else MODBUSERROR;
+
+ return MODBUSOK;
 }
-	
+
 
 uint16_t DisplayInstallationStatus()
 {
-	uint16_t Data = 0;	
+	uint16_t Data = 0;
 	if (MODBUSOK == EnergyCam_GetResultOCRInstallation(&Data)) {
        switch(Data){
 		   case INSTALLATION_FAILED:  	Colour(PRINTF_RED,false);printf("Installation failed");Colour(0,true);
@@ -319,7 +319,7 @@ uint16_t DisplayInstallationStatus()
 										break;		
 		}
 	}
-	
+
 	return Data;
 }
 
@@ -365,7 +365,7 @@ int IsNewSecond(int iS)
 	if(CurTime != iTime){
 		iTime = CurTime;
 		return 1;
-	}				
+	}
 return(0);
 }
 
@@ -380,26 +380,26 @@ int IsNewMinute(void)
 		iMinute = CurTime;
 		return 1;
 	}
-			
+
 return(0);
 }
 
 void Intro(int Read)
 {
 	printf("   \n");
-	Colour(62,false);	
+	Colour(62,false);
 	printf("#############################################\r\n");
-	printf("## ecpi - EnergyCam on raspberry Pi/Wheezy ##\r\n");	
+	printf("## ecpi - EnergyCam on raspberry Pi/Wheezy ##\r\n");
 	printf("#############################################\r\n");
 
 	Colour(0,true);
 	printf("   Usage\n");
 	printf("   q   : Quit\n");
-	printf("   R   : Trigger Reading\n");
-	printf("   r   : read Value\n");
-	printf("   Reading is triggered every %d minutes \n",Read);	
-	printf("   \n");  	  
-   
+	//printf("   R   : Trigger Reading\n");
+	//printf("   r   : read Value\n");
+	printf("   Reading is triggered every %d minutes \n",Read);
+	printf("   \n");
+
 }
 
 
@@ -407,10 +407,10 @@ void ErrorAndExit(const char *info)
 {
 	Colour(PRINTF_RED,false);
 	printf("%s",info);
-	Colour(0,true);	
+	Colour(0,true);
 
 	EnergyCamClose();
-			
+
 	exit(0);
 }
 
@@ -454,24 +454,24 @@ void sendDataToServer(char ip[], char port[], char auth[], int OCRData, int Data
 	}
 
 	if(connected != -1) {
-		printf("Connected to Server \n");
+		printf("Sending to Server \n");
 	} else {
 		ErrorAndExit("No Connection to Server");
 	}
 
 	int OffsetHours = tm.tm_gmtoff/3600;
-	unsigned int OffsetMin = tm.tm_gmtoff/60 - OffsetHours*60;
 	char request[200];
-	sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-%02d:%02d&value=%d.%d HTTP/1.0\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, OffsetHours, OffsetMin, OCRData, Data, ip, auth);
+	sprintf(request,"POST /meterValue?date=%04d-%02d-%02dT%02d:%02d:%02d.000-00:00&value=%d.%d HTTP/1.0\r\nHost: %s\r\nAuthorization: Basic %s\r\n\r\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour-OffsetHours, tm.tm_min, tm.tm_sec, OCRData, Data, ip, auth);
 	send(sock,request,strlen(request),0);
-	printf(request);
+	//printf(request);
+	close(connected);
 	close(sock);
 }
 //Projektwerkstatt
 
 //////////////////////////////////////////////
-int main(int argc, char *argv[]) 
-{ 
+int main(int argc, char *argv[])
+{
 
 	//Projektwerkstatt
 	if(argc != 4) {
@@ -505,7 +505,7 @@ int main(int argc, char *argv[])
 		fprintf (stderr, "Not running on raspberry pi - now ending\n") ;
 		exit(0);
 	}
-			
+
 	EnergyCamOpen(0);  //open serial port
 
 	//get Status & wakeup
@@ -550,19 +550,25 @@ int main(int argc, char *argv[])
 		}
 		while((iTimeout-->0) && (Data == 0xFFFD));
 		printf("\n");
-		
+
 		//Is EnergyCam installed
-		Data = DisplayInstallationStatus();	
+		Data = DisplayInstallationStatus();
 	}
 
 	if((Data == INSTALLATION_NODIGITS) || (Data == INSTALLATION_NOTDONE) || (Data == INSTALLATION_FAILED) || (Data == INSTALLATION_ONGOING)){
 		ErrorAndExit("EnergyCAM not installed ");
-	}	
+	}
 
 
 
 
 	//get last Reading
+	EnergyCam_TriggerReading();
+	sleep(4);
+	iRetry = 3;
+	do{
+		if(iRetry-- < 0) break;
+	}while(MODBUSERROR == EnergyCam_GetStatusReading(&Data));
 	if (MODBUSOK == EnergyCam_GetResultOCRInt(&OCRData,&Data)) {
 	  time_t t = time(NULL);
 	  struct tm tm = *localtime(&t);
@@ -582,7 +588,7 @@ int main(int argc, char *argv[])
 
 		key = getkey();
 
-		if(key == 'r')   {
+		/*if(key == 'r')   {
 		  iReadRequest++; //Read now
 		}
 		if(key == 'R')   {
@@ -593,21 +599,28 @@ int main(int argc, char *argv[])
 			do {
 				if(iRetry-- < 0 ) break;
 			}while(MODBUSERROR == EnergyCam_GetStatusReading(&Data));
-			printf("GetStatusReading %04X \n",Data);	
+			printf("GetStatusReading %04X \n",Data);
 
 			//trigger new reading
-			EnergyCam_TriggerReading();		  
-		}			
+			EnergyCam_TriggerReading();
+		}*/
 
 
 		if(IsNewMinute()){
 		  if(--ReadingTimer<=1)iReadRequest++;
 		  printf("%02d ",ReadingTimer);
+		  iRetry = 3;
+                  do {
+                      if(iRetry-- < 0 ) break;
+                  }while(MODBUSERROR == EnergyCam_GetStatusReading(&Data));
+
+                  //trigger new reading
+		  EnergyCam_TriggerReading();
 		}
 
 		if(iReadRequest > 0) {
 		  iReadRequest=0;
-		  printf("%02d \n",ReadingTimer);	
+		  printf("%02d \n",ReadingTimer);
 		  ReadingTimer=ReadingPeriod+1;
 
 		  //get Status & wakeup
@@ -615,10 +628,9 @@ int main(int argc, char *argv[])
 		  do {
 		    if(iRetry-- < 0 ) break;
 		  }while(MODBUSERROR == EnergyCam_GetStatusReading(&Data));
-		    printf("GetStatusReading %04X \n",Data);
+		    //printf("GetStatusReading %04X \n",Data);
 		    EnergyCam_GetOCRPicDone(&Data);
-		    printf("Pictures %04d \n",Data);
-
+		    //printf("Pictures %04d \n",Data);
 		    if (MODBUSOK == EnergyCam_GetResultOCRInt(&OCRData,&Data)) {
 		    time_t t = time(NULL);
 		    struct tm tm = *localtime(&t);
@@ -627,7 +639,7 @@ int main(int argc, char *argv[])
 		    sendDataToServer(argv[1],argv[2],argv[3],OCRData,Data);
 		    //Projektwerkstatt
 		    EnergyCam_Log2CSVFile("/var/www/ecpi/data/ecpi.csv",OCRData,Data);
-		  }	
+		  }
 		}
 
 	} // end while
