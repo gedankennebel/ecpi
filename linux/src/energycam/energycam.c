@@ -609,6 +609,7 @@ int main(int argc, char *argv[])
 		if(IsNewMinute()){
 		  if(--ReadingTimer<=1)iReadRequest++;
 		  printf("%02d ",ReadingTimer);
+		  fflush(stdout);
 		  iRetry = 3;
                   do {
                       if(iRetry-- < 0 ) break;
